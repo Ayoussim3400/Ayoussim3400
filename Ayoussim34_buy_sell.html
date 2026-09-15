@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayoussim34 - شراء الدولار</title>
+<style>
+body{
+    margin:0;
+    font-family:'Tahoma',sans-serif;
+    background:linear-gradient(135deg,#000000,#1a1a1a);
+    color:white;
+    text-align:center;
+}
+.container{padding:30px;}
+h1{
+    font-size:38px;
+    letter-spacing:3px;
+    text-shadow:0 0 10px #00ffcc,0 0 20px #00ffcc;
+}
+.welcome{font-size:18px;margin-bottom:20px;color:#ddd;}
+.services,.note{
+    background:rgba(255,255,255,0.08);
+    padding:15px;
+    border-radius:12px;
+    margin:20px auto;
+    width:90%;
+    max-width:500px;
+}
+input,select{
+    width:90%;
+    max-width:400px;
+    padding:10px;
+    margin:8px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+    box-sizing:border-box;
+}
+.button{
+    background:#00cc66;
+    padding:12px 25px;
+    border:none;
+    border-radius:8px;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+}
+.copy-btn{
+    background:#00994d;
+    border:none;
+    padding:8px 15px;
+    border-radius:6px;
+    color:white;
+}
+.total{
+    color:#00ffcc;
+    font-size:19px;
+    font-weight:bold;
+    margin:15px;
+    line-height:1.7;
+}
+.warning{color:#ff5555;font-weight:bold;}
+.small{font-size:13px;color:#aaa;line-height:1.7;}
+.method-box{
+    background:rgba(0,255,204,0.07);
+    border:1px solid rgba(0,255,204,0.2);
+    border-radius:10px;
+    padding:10px;
+    margin:10px auto;
+    width:90%;
+    max-width:400px;
+}
+.rate{
+    color:#00ffcc;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>✦ Ayoussim34 ✦</h1>
+
+<div class="welcome">
+مرحبا بكم في خدمة شراء الدولار بسرعة وأمان 💵⚡
+</div>
+
+<div class="services">
+<h3>خدماتنا:</h3>
+✔ شراء الدولار من عدة دول وعملات<br>
+✔ أكثر من 3 طرق دفع حسب الدولة<br>
+✔ حساب تلقائي للمبلغ بالعملة المحلية<br>
+✔ معالجة الطلبات ودعم مباشر
+</div>
+
+<h2 id="operationTitle">شراء / بيع العملات</h2>
+
+<select id="operation" onchange="updateOperationUI()">
+<option value="">اختر نوع العملية</option>
+<option value="buy">شراء</option>
+<option value="sell">بيع</option>
+</select>
+
+<div id="operationHint" class="small"></div>
+
+
+<select id="currency" onchange="changeCurrencyType();changeCountry();calculateLocal()">
+<option value="">اختر العملة</option>
+<option value="USD">دولار $</option>
+<option value="EUR">يورو €</option>
+</select>
+
+<select id="country" onchange="changeCountry()">
+<option value="">اختر الدولة</option>
+</select>
+
+<select id="paymentMethod">
+<option value="">اختر طريقة الدفع</option>
+</select>
+
+<select id="cryptoPlatform"><option value="">اختر منصة بيع العملات</option></select>
+
+<input type="text" id="account" placeholder="رقم الحساب / رقم الهاتف / IBAN حسب طريقة الدفع">
+
+<input type="number" id="amount" placeholder="المبلغ بالعملة المختارة" min="80" max="1200" step="1"
+oninput="calculateLocal();checkAmount()">
+
+<div class="total" id="totalLocal"></div>
+<div id="warning" class="warning"></div>
+
+<div class="note">
+<b>حدود الشراء:</b><br>
+أقل مبلغ: <span class="rate">80$</span><br>
+أقصى مبلغ: <span class="rate">1200$</span><br>
+سعرنا الأساسي: <span class="rate">1$ = 243 دج</span><br>
+سعر اليورو المعتمد: <span class="rate">1€ = 274 دج</span>
+</div>
+
+<div class="note">
+<div>🌍 أسعار العملات المعروضة هي أسعار تشغيلية ثابتة داخل الموقع، وليست أسعار سوق لحظية.</div>
+<div class="small">
+يمكن تعديلها من كائن العملات داخل JavaScript عند الحاجة.
+بعض طرق الدفع قد تختلف حسب البنك أو نوع الحساب أو بلد العميل.
+</div>
+</div>
+
+<button class="button" onclick="sendEmail()">إرسال طلب الشراء</button>
+
+</div>
+
+<script>
+/*
+  السعر المرجعي الذي طلبته:
+  1 USD = 243 DZD
+  1 EUR = 274 DZD
+  باقي العملات أضيفت كتحويلات تشغيلية تقريبية مقابل 1 USD.
+  يمكن تعديل أي rate من هنا بسهولة.
+*/
+const countries = {
+  /* شمال إفريقيا */
+  "الجزائر 🇩🇿": {
+    currency:"DZD", symbol:"دج", rate:243,
+    methods:["بريدي موب","CCP / تحويل بريدي","البطاقة الذهبية","BaridiWeb"]
+  },
+  "المغرب 🇲🇦": {
+    currency:"MAD", symbol:"DH", rate:9.20,
+    methods:["Inwi Money","Cash Plus","CIH Bank","تحويل بنكي"]
+  },
+  "تونس 🇹🇳": {
+    currency:"TND", symbol:"د.ت", rate:2.90,
+    methods:["D17","Flouci","e-Dinar","تحويل بنكي"]
+  },
+  "ليبيا 🇱🇾": {
+    currency:"LYD", symbol:"ل.د", rate:6.35,
+    methods:["مصرف ليبيا المركزي / تحويل مصرفي","موبي كاش","Sadad","تحويل بنكي"]
+  },
+  "مصر 🇪🇬": {
+    currency:"EGP", symbol:"ج.م", rate:48.70,
+    methods:["Vodafone Cash","Fawry","InstaPay","تحويل بنكي"]
+  },
+  "موريتانيا 🇲🇷": {
+    currency:"MRU", symbol:"أوقية", rate:39.70,
+    methods:["Bankily","Masrvi","BAMIS","تحويل بنكي"]
+  },
+  "السودان 🇸🇩": {
+    currency:"SDG", symbol:"ج.س", rate:600,
+    methods:["Bankak","mBOK","تحويل بنكي","محفظة إلكترونية"]
+  },
+
+  /* دول الخليج العربي - GCC */
+  "السعودية 🇸🇦": {
+    currency:"SAR", symbol:"ر.س", rate:3.75,
+    methods:["Mada","STC Bank / STC Pay","Apple Pay","تحويل بنكي"]
+  },
+  "الإمارات 🇦🇪": {
+    currency:"AED", symbol:"د.إ", rate:3.6725,
+    methods:["UAE Switch","Apple Pay","Google Pay","تحويل بنكي"]
+  },
+  "قطر 🇶🇦": {
+    currency:"QAR", symbol:"ر.ق", rate:3.64,
+    methods:["NAPS","Fawran","Qatar Mobile Payment","تحويل بنكي"]
+  },
+  "الكويت 🇰🇼": {
+    currency:"KWD", symbol:"د.ك", rate:0.3065,
+    methods:["KNET","Weyay","Apple Pay","تحويل بنكي"]
+  },
+  "البحرين 🇧🇭": {
+    currency:"BHD", symbol:"د.ب", rate:0.376,
+    methods:["BenefitPay","BENEFIT","Apple Pay","تحويل بنكي"]
+  },
+  "عُمان 🇴🇲": {
+    currency:"OMR", symbol:"ر.ع", rate:0.3845,
+    methods:["OMANNET","OmanNet","Thawani Pay","تحويل بنكي"]
+  },
+
+  /* دول عربية إضافية */
+  "الأردن 🇯🇴": {
+    currency:"JOD", symbol:"د.أ", rate:0.709,
+    methods:["CliQ","eFAWATEERcom","Zain Cash","تحويل بنكي"]
+  },
+  "العراق 🇮🇶": {
+    currency:"IQD", symbol:"ع.ع", rate:1310,
+    methods:["ZainCash","Asia Hawala","FastPay","تحويل بنكي"]
+  },
+  "لبنان 🇱🇧": {
+    currency:"LBP", symbol:"ل.ل", rate:89500,
+    methods:["OMT","Whish Money","BOB Finance","تحويل بنكي"]
+  },
+
+  /* دول أخرى */
+  "المملكة المتحدة 🇬🇧": {
+    currency:"GBP", symbol:"£", rate:0.79,
+    methods:["Faster Payments","Wise","PayPal","Visa / Mastercard"]
+  },
+  "فرنسا 🇫🇷": {
+    currency:"EUR", symbol:"€", rate:1.12757,
+    methods:["SEPA","PayPal","Visa / Mastercard","Apple Pay"]
+  },
+  "ألمانيا 🇩🇪": {
+    currency:"EUR", symbol:"€", rate:1.12757,
+    methods:["SEPA","PayPal","Visa / Mastercard","Apple Pay"]
+  },
+  "إسبانيا 🇪🇸": {
+    currency:"EUR", symbol:"€", rate:1.12757,
+    methods:["SEPA","Bizum","PayPal","Visa / Mastercard"]
+  },
+  "إيطاليا 🇮🇹": {
+    currency:"EUR", symbol:"€", rate:1.12757,
+    methods:["SEPA","PayPal","Visa / Mastercard","Apple Pay"]
+  },
+  "الولايات المتحدة 🇺🇸": {
+    currency:"USD", symbol:"$", rate:1,
+    methods:["Zelle","ACH Transfer","PayPal","Visa / Mastercard"]
+  },
+  "كندا 🇨🇦": {
+    currency:"CAD", symbol:"C$", rate:1.38,
+    methods:["Interac e-Transfer","PayPal","Visa / Mastercard","تحويل بنكي"]
+  },
+  "سويسرا 🇨🇭": {
+    currency:"CHF", symbol:"CHF", rate:0.80,
+    methods:["TWINT","تحويل بنكي","Visa / Mastercard","PayPal"]
+  },
+  "تركيا 🇹🇷": {
+    currency:"TRY", symbol:"₺", rate:40.70,
+    methods:["FAST","Papara","IBAN","بطاقة بنكية"]
+  },
+  "الهند 🇮🇳": {
+    currency:"INR", symbol:"₹", rate:87.50,
+    methods:["UPI","PhonePe","Google Pay","Paytm"]
+  },
+  "البرازيل 🇧🇷": {
+    currency:"BRL", symbol:"R$", rate:5.40,
+    methods:["Pix","TED","Mercado Pago","Visa / Mastercard"]
+  },
+  "المكسيك 🇲🇽": {
+    currency:"MXN", symbol:"MX$", rate:18.80,
+    methods:["SPEI","OXXO","Mercado Pago","Visa / Mastercard"]
+  },
+  "اليابان 🇯🇵": {
+    currency:"JPY", symbol:"¥", rate:157,
+    methods:["PayPay","Furikomi Transfer","Visa / Mastercard","Apple Pay"]
+  },
+  "الصين 🇨🇳": {
+    currency:"CNY", symbol:"¥", rate:7.18,
+    methods:["Alipay","WeChat Pay","UnionPay","تحويل بنكي"]
+  },
+  "كوريا الجنوبية 🇰🇷": {
+    currency:"KRW", symbol:"₩", rate:1390,
+    methods:["Kakao Pay","Naver Pay","Toss","بطاقة بنكية"]
+  },
+  "جنوب أفريقيا 🇿🇦": {
+    currency:"ZAR", symbol:"R", rate:17.80,
+    methods:["EFT","FNB Pay","Capitec Pay","Visa / Mastercard"]
+  },
+  "نيجيريا 🇳🇬": {
+    currency:"NGN", symbol:"₦", rate:1500,
+    methods:["OPay","PalmPay","Bank Transfer","Visa / Mastercard"]
+  },
+  "كينيا 🇰🇪": {
+    currency:"KES", symbol:"KSh", rate:129,
+    methods:["M-PESA","Airtel Money","Bank Transfer","Visa / Mastercard"]
+  },
+  "إندونيسيا 🇮🇩": {
+    currency:"IDR", symbol:"Rp", rate:16500,
+    methods:["GoPay","OVO","DANA","Bank Transfer"]
+  },
+  "الفلبين 🇵🇭": {
+    currency:"PHP", symbol:"₱", rate:58,
+    methods:["GCash","Maya","InstaPay","Bank Transfer"]
+  },
+  "ماليزيا 🇲🇾": {
+    currency:"MYR", symbol:"RM", rate:4.25,
+    methods:["DuitNow","Touch 'n Go eWallet","GrabPay","Bank Transfer"]
+  },
+  "باكستان 🇵🇰": {
+    currency:"PKR", symbol:"₨", rate:280,
+    methods:["JazzCash","Easypaisa","Bank Transfer","Visa / Mastercard"]
+  },
+  "بنغلاديش 🇧🇩": {
+    currency:"BDT", symbol:"৳", rate:122,
+    methods:["bKash","Nagad","Rocket","Bank Transfer"]
+  },
+  "تايلاند 🇹🇭": {
+    currency:"THB", symbol:"฿", rate:32.50,
+    methods:["PromptPay","TrueMoney","Bank Transfer","Visa / Mastercard"]
+  }
+};
+
+const platformByCurrency = {
+  USD: [
+    "Binance","Bybit","OKX","Coinbase","Kraken","KuCoin","Gate","Bitget","MEXC","Crypto.com",
+    "Bitfinex","Bitstamp","Gemini","BingX","BitMart","CoinEx","Phemex","Deribit","CoinW","LBank",
+    "XT.COM","Deepcoin","Bitrue","Poloniex","AscendEX","BTCC","BitMEX","CEX.IO","Uphold",
+    "Robinhood Crypto","Trust Wallet","MetaMask","Phantom","OKX Wallet","Exodus","Ledger","Trezor",
+    "SafePal","Tonkeeper","Bybit Wallet","Binance Web3 Wallet","RedotPay","Payeer","Perfect Money",
+    "PayPal USD","Visa USD","Mastercard USD"
+  ],
+  EUR: [
+    "Mastercard EUR","Visa EUR","PayPal EUR","Payoneer EUR","Paysera EUR","MyFin EUR","Wise EUR",
+    "Revolut EUR","Skrill EUR","Neteller EUR","N26 EUR","Monese EUR","bunq EUR","SEPA","SEPA Instant",
+    "Advcash EUR","Payeer EUR","Perfect Money EUR","Western Union EUR","MoneyGram EUR","Remitly EUR",
+    "WorldRemit EUR","Airwallex EUR","Apple Pay EUR","Google Pay EUR","RedotPay EUR","Skrill",
+    "Neteller","Paysera","Payoneer","Revolut","Wise","N26","Monese","bunq","Bitpanda EUR",
+    "Bitstamp EUR","Kraken EUR","Coinbase EUR","Crypto.com EUR","OKX EUR","Bitget EUR","Trust Wallet EUR"
+  ]
+};
+const cryptoPlatformSelect=document.getElementById("cryptoPlatform");
+
+function changeCurrencyType(){
+  const currency=document.getElementById("currency").value;
+  cryptoPlatformSelect.innerHTML='<option value="">اختر منصة بيع '+(currency==="USD"?"الدولار":"اليورو")+'</option>';
+  (platformByCurrency[currency]||[]).forEach(x=>cryptoPlatformSelect.innerHTML+=`<option value="${x}">${x}</option>`);
+  const amount=document.getElementById("amount");
+  amount.placeholder=currency==="EUR"?"المبلغ باليورو":"المبلغ بالدولار";
+  document.querySelector("h2").textContent=currency==="EUR"?"طلب شراء اليورو":"طلب شراء الدولار";
+}
+
+const countrySelect = document.getElementById("country");
+Object.keys(countries).forEach(country=>{
+  countrySelect.innerHTML += `<option value="${country}">${country}</option>`;
+});
+
+function changeCountry(){
+  const country = document.getElementById("country").value;
+  const payment = document.getElementById("paymentMethod");
+  payment.innerHTML = '<option value="">اختر طريقة الدفع</option>';
+
+  if(!country) {
+    calculateLocal();
+    return;
+  }
+
+  countries[country].methods.forEach(method=>{
+    payment.innerHTML += `<option value="${method}">${method}</option>`;
+  });
+
+  calculateLocal();
+}
+
+function calculateLocal(){
+  const country=document.getElementById("country").value;
+  const currency=document.getElementById("currency").value;
+  const amount=Number(document.getElementById("amount").value);
+  const box=document.getElementById("totalLocal");
+  if(!country||!currency||!amount){box.innerHTML="";return;}
+  const data=countries[country];
+  let rate=data.rate;
+  // أسعار الموقع الأساسية المطلوبة: 1$ = 243 دج و 1€ = 274 دج.
+  if(country.includes("الجزائر")) rate=currency==="EUR"?274:243;
+  // الدول التي عملتها المحلية هي اليورو: 1€ = 1 من العملة المحلية.
+  else if(data.currency==="EUR") rate=currency==="EUR"?1:0.8869;
+  else if(currency==="EUR") rate=data.rate*1.12757;
+  const symbol=currency==="EUR"?"€":"$";
+  box.innerHTML=`المبلغ المطلوب: ${amount.toLocaleString()} ${symbol}<br>المبلغ بالعملة المحلية: ${(amount*rate).toLocaleString(undefined,{maximumFractionDigits:2})} ${data.symbol}<br><span class="small">سعر التحويل: 1 ${symbol} = ${rate} ${data.symbol}</span>`;
+}
+
+function checkAmount(){
+  const amount = Number(document.getElementById("amount").value);
+  const warning = document.getElementById("warning");
+
+  if(amount && amount < 80){
+    warning.innerHTML = "⚠️ أقل مبلغ شراء هو 80$";
+  } else if(amount > 1200){
+    warning.innerHTML = "⚠️ أقصى مبلغ شراء هو 1200$";
+  } else {
+    warning.innerHTML = "";
+  }
+}
+
+
+function updateOperationUI(){
+  const op = document.getElementById("operation")?.value || "";
+  const title = document.getElementById("operationTitle");
+  const hint = document.getElementById("operationHint");
+
+  if(title){
+    title.textContent =
+      op === "buy" ? "طلب شراء العملة" :
+      op === "sell" ? "طلب بيع العملة" :
+      "شراء / بيع العملات";
+  }
+
+  if(hint){
+    hint.textContent =
+      op === "buy" ? "اختر شراء لشراء USD أو EUR." :
+      op === "sell" ? "اختر بيع لبيع USD أو EUR." : "";
+  }
+
+  const btn = document.querySelector('button[onclick="sendEmail()"]');
+  if(btn){
+    btn.textContent = op === "sell" ? "إرسال طلب البيع" :
+                      op === "buy" ? "إرسال طلب الشراء" :
+                      "إرسال الطلب";
+  }
+}
+
+function sendEmail(){
+  const country = document.getElementById("country").value;
+  const method = document.getElementById("paymentMethod").value;
+  const account = document.getElementById("account").value.trim();
+  const amount = Number(document.getElementById("amount").value);
+
+  const currency = document.getElementById("currency").value;
+  if(!currency || !country || !method || !account || !amount || !cryptoPlatformSelect.value){
+    alert("يرجى ملء جميع المعلومات");
+    return;
+  }
+
+  if(amount < 80 || amount > 1200){
+    alert("المبلغ يجب أن يكون بين 80$ و 1200$");
+    return;
+  }
+
+  const data = countries[country];
+  const localTotal = (amount * data.rate).toFixed(2);
+
+  const body =
+    "طلب شراء " + (currency === "EUR" ? "اليورو" : "الدولار") + "%0A" +
+    "الدولة: " + encodeURIComponent(country) + "%0A" +
+    "العملة المطلوبة: " + currency + "%0A" +
+    "طريقة الدفع: " + encodeURIComponent(method) + "%0A" +
+    "منصة/طريقة البيع: " + encodeURIComponent(cryptoPlatformSelect.value) + "%0A" +
+    "الحساب/المرجع: " + encodeURIComponent(account) + "%0A" +
+    "المبلغ المطلوب: " + amount + " " + currency + "%0A" +
+    "المبلغ بالعملة المحلية: " + localTotal + " " + data.currency;
+
+  window.location.href =
+    "mailto:ayoussim340@gmail.com?subject=" + encodeURIComponent("طلب شراء " + (currency === "EUR" ? "اليورو" : "الدولار")) + "&body=" + body;
+}
+</script>
+</body>
+</html>
